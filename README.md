@@ -1,6 +1,21 @@
 # Astryx (GAQWH)
 
+![CI Status](https://github.com/MeridianAlgo/AstryxChain/actions/workflows/ci.yml/badge.svg)
+
 **Astryx** is a next-generation, high-performance, and quantum-resistant hashing algorithm designed for industrial-scale blockchain architectures. It implements the **Adaptive Quantum Walk Hash (GAQWH)**, a sophisticated cryptographic engine that combines the chaotic evolution of non-linear quantum dynamics with robust classical bit-diffusion.
+
+## Sample Results (v1.0.0)
+
+The following results demonstrate the high-entropy output of the GAQWH algorithm across various input types:
+
+| Input Type | Sample Data | Astryx GAQWH Hash (256-bit) |
+| :--- | :--- | :--- |
+| **Word** | `Astryx` | `1a0ac88a0af3a9d0988fb65820818596fa0ab7e7...` |
+| **Word** | `astryx` | `09baab0ebce6d9c36cb18b971bee769ebdd50e6f...` |
+| **Wallet Key** | `5Kb8kLf9...` | `f0ea349d883cfea4d0fa5b284b24ad87b075f3c4...` |
+| **ETH Address** | `0x742d3...` | `e7369f2d8caef6a62e01172851e8de53ac00d511...` |
+
+> *Note: These hashes are deterministic. A single character change in a wallet key results in a completely unique digest.*
 
 ## Technical Architecture
 
