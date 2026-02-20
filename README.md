@@ -2,236 +2,267 @@
 
 ![CI Status](https://github.com/MeridianAlgo/AstryxChain/actions/workflows/ci.yml/badge.svg)
 
-AstryxChain is a Python package that currently ships one primitive: `gaqwh`, a custom deterministic hash function.
+AstryxChain is an **experimental hashing research repository** focused on Astryx/GAQWH-style diffusion.
+It currently includes:
 
-This repository does **not** implement a signature scheme (such as ML-DSA / Dilithium), key exchange, encryption, or consensus logic. It is focused on hashing only.
+- a **Python prototype** hash (`astryx.gaqwh`) used for rapid experimentation, and
+- a **Rust crate** (`astryx`) with a pure-Rust walk/compression pipeline and fixed output APIs.
+
+> ⚠️ **Security notice:** this project is unaudited and not standardized. It is not a replacement for SHA-2/SHA-3/BLAKE3 in production critical systems without substantial external cryptanalysis.
 
 ---
 
 ## Table of contents
 
-1. [Project status](#project-status)
-2. [What AstryxChain includes](#what-astryxchain-includes)
-3. [What AstryxChain does not include](#what-astryxchain-does-not-include)
-4. [Repository layout](#repository-layout)
-5. [Installation](#installation)
-6. [API reference](#api-reference)
-7. [Command-line interface](#command-line-interface)
-8. [Benchmarking](#benchmarking)
-9. [Testing](#testing)
-10. [Security and production-use warning](#security-and-production-use-warning)
-11. [Roadmap](#roadmap)
-12. [License](#license)
+1. [Project goals](#project-goals)
+2. [Current status](#current-status)
+3. [Repository structure](#repository-structure)
+4. [Install and quick start (Python)](#install-and-quick-start-python)
+5. [Rust crate usage](#rust-crate-usage)
+6. [Deterministic example outputs](#deterministic-example-outputs)
+7. [CLI usage](#cli-usage)
+8. [How CI works](#how-ci-works)
+9. [Testing locally](#testing-locally)
+10. [Blockchain-oriented hardening guidance](#blockchain-oriented-hardening-guidance)
+11. [Threat model and limitations](#threat-model-and-limitations)
+12. [Roadmap](#roadmap)
+13. [License](#license)
 
 ---
 
-## Project status
+## Project goals
 
-- **Current maturity:** experimental.
-- **Implementation language:** Python + NumPy.
-- **Primary goal right now:** provide a reproducible hashing prototype and tooling around it.
+AstryxChain aims to provide a reproducible sandbox for evaluating a quantum-walk-inspired hash design with:
 
-If your end goal is a production blockchain, treat this repository as a research/prototyping component and pair it with standardized cryptographic primitives for signatures and key management.
+- deterministic behavior,
+- variable output lengths,
+- strong diffusion/avalanche behavior,
+- practical APIs for blockchain-adjacent components (block IDs, tx IDs, Merkle leaves, PoW experiments),
+- cross-language implementation experiments (Python reference/prototype + Rust implementation).
 
-## What AstryxChain includes
+This repo is intentionally explicit about what it is **not**: a fully audited cryptographic suite.
 
-- A callable hash function: `gaqwh(data, output_bits=256)`.
-- A simple class wrapper (`Astryx`) that powers the hash routine.
-- Output length selection in multiples of 64 bits.
-- A CLI (`cli.py`) for hashing text input or piped input.
-- Unit tests under `tests/`.
-- A benchmark script (`scripts/benchmark_hashes.py`) to compare throughput with common reference hashes.
+## Current status
 
-## What AstryxChain does not include
+- **Maturity:** experimental research code.
+- **Primary language stack:** Python + NumPy prototype, plus Rust crate.
+- **Stability target:** deterministic outputs and regression-test coverage.
+- **Security state:** no formal proof, no external third-party audit, no standardization-track review.
 
-- No digital signature scheme.
-- No wallet/key derivation standards.
-- No consensus implementation.
-- No formal cryptographic proof.
-- No third-party cryptanalysis report.
+If your use case is a production blockchain, this repository is best treated as a testbed and should be paired with established primitives and a formal security process.
 
-Because of those gaps, the project should not be marketed as a replacement for mature standardized cryptographic systems.
-
-## Repository layout
+## Repository structure
 
 ```text
 astryx/
-  __init__.py          # public package exports
-  core.py              # compatibility re-exports
-  gaqwh.py             # full hash implementation
+  __init__.py                 # Python package exports
+  core.py                     # compatibility re-exports
+  gaqwh.py                    # Python prototype hash
 
-scripts/
-  benchmark_hashes.py  # local benchmark utility
-  produce_results.py   # sample digest printer
+src/
+  lib.rs                      # Rust public API: astryx/astryx_256/astryx_512
+  walk.rs                     # Rust walk simulation and quantization
+  compress.rs                 # Rust compression/mixing layer
+  tests.rs                    # Rust tests
+
+.github/workflows/ci.yml      # Multi-job CI pipeline (Python + Rust + docs sanity)
 
 tests/
-  test_hash.py         # unit tests + CLI tests
+  test_hash.py                # Python unit tests + CLI checks
 
-cli.py                 # command line entry point
+scripts/
+  benchmark_hashes.py         # benchmark helper
+  produce_results.py          # deterministic output helper
+
+cli.py                        # Python CLI entrypoint
+Cargo.toml                    # Rust crate manifest
 README.md
-requirements.txt
-setup.py
 ```
 
-## Installation
-
-### 1) Clone repository
+## Install and quick start (Python)
 
 ```bash
 git clone https://github.com/MeridianAlgo/AstryxChain
 cd AstryxChain
-```
-
-### 2) Install dependencies
-
-```bash
+python -m pip install --upgrade pip
 pip install -r requirements.txt
-```
-
-### 3) Install package
-
-```bash
 pip install .
 ```
 
-## API reference
-
-### `gaqwh(data, output_bits=256) -> str`
-
-Hashes a string or bytes input and returns a lowercase hex digest.
-
-#### Parameters
-
-- `data` (`str | bytes`): message to hash.
-- `output_bits` (`int`, default `256`): output size in bits.
-
-#### Constraints
-
-- `output_bits` must be:
-  - greater than 0
-  - a multiple of 64
-
-Invalid values raise `ValueError`.
-
-#### Return value
-
-- Hex string with length `output_bits / 4` characters.
-
-#### Example
+### Python API
 
 ```python
 from astryx import gaqwh
 
-message = "block_header_height_124"
-digest_256 = gaqwh(message)
-digest_512 = gaqwh(message, output_bits=512)
+msg = "block_header_height_124"
+h256 = gaqwh(msg, output_bits=256)
+h512 = gaqwh(msg, output_bits=512)
 
-print(digest_256)
-print(digest_512)
+print(h256)
+print(h512)
 ```
 
-### Backward-compatible imports
+`gaqwh(data, output_bits)` in Python:
 
-Both import styles are supported:
+- accepts `str | bytes`,
+- returns lowercase hex string,
+- requires `output_bits > 0` and multiple of 64.
 
-```python
-from astryx import gaqwh
-# or
-from astryx.core import gaqwh
+## Rust crate usage
+
+The Rust crate is named `astryx` and exposes:
+
+- `astryx(input: &[u8], output_bits: usize) -> Vec<u8>` (`256` or `512`),
+- `astryx_256(input: &[u8]) -> [u8; 32]`,
+- `astryx_512(input: &[u8]) -> [u8; 64]`,
+- compatibility aliases: `gaqwh`, `gaqwh_256`, `gaqwh_512`.
+
+Example:
+
+```rust
+use astryx::{astryx_256, astryx_512};
+
+let h256 = astryx_256(b"Astryx");
+let h512 = astryx_512(b"Astryx");
+
+assert_eq!(h256.len(), 32);
+assert_eq!(h512.len(), 64);
 ```
 
-## Command-line interface
+## Deterministic example outputs
 
-### Hash a positional argument
+### Python prototype (`astryx.gaqwh`)
+
+Message: `"Astryx"`
+
+- 256-bit:
+  `50c20f902e5d0995f654d0665ff05b1e5b7fba21cd637442a8d7690eff7c2466`
+- 512-bit:
+  `50c20f902e5d0995f654d0665ff05b1e5b7fba21cd637442a8d7690eff7c2466145519be2cb4a990c69ba3e4e5624ec18fa5b06855fd0fb5f22f31a39512ae5e`
+
+Message: `"block_header_height_124"`
+
+- 256-bit:
+  `ee236a94851f098ecec9a5f4222f17794d0800c3113f565b0791b7522475a6d4`
+
+### Rust crate (`astryx_256` / `astryx_512`)
+
+Message: `b"Astryx"`
+
+- 256-bit:
+  `b0902b30549ac346d16ddf5c6756f6dd5efd8e77640a356172b85c8ce391545b`
+- 512-bit:
+  `b0902b30549ac346d16ddf5c6756f6dd5efd8e77640a356172b85c8ce391545b4abe83fe50bd98f5853995b7e3737668ad9ae5777e21c04bf1681c0c7a4cfe15`
+
+> Note: Python prototype and Rust crate are both deterministic but currently separate implementation tracks and are **not byte-for-byte equivalent**.
+
+## CLI usage
 
 ```bash
 python cli.py "Astryx"
-```
-
-### Hash piped input
-
-```bash
 echo "Astryx" | python cli.py
+python cli.py -b 256 "block_header_height_124"
+python cli.py -b 512 "block_header_height_124"
 ```
 
-### Choose output size
+If no positional input is provided and stdin is empty, the CLI returns a guidance message.
 
-```bash
-python cli.py -b 128 "Astryx"
-python cli.py -b 256 "Astryx"
-python cli.py -b 512 "Astryx"
-```
+## How CI works
 
-### Empty input behavior
+The GitHub Actions workflow (`.github/workflows/ci.yml`) has three jobs:
 
-If no argument is provided and stdin is empty, CLI prints a guidance message and exits without generating a digest.
+1. **python-tests**
+   - matrix on Python `3.10/3.11/3.12`,
+   - installs package + requirements,
+   - runs unittest discovery,
+   - runs a CLI smoke test.
 
-## Benchmarking
+2. **rust-tests**
+   - installs stable Rust toolchain,
+   - checks formatting (`cargo fmt --check`),
+   - runs `cargo test --all-targets --all-features`,
+   - uses Cargo cache for faster reruns.
 
-A local benchmark script is available:
+3. **docs-consistency**
+   - basic sanity checks that core docs and key files exist.
 
-```bash
-python scripts/benchmark_hashes.py --size 1024 --iterations 2000
-```
+The workflow also includes:
 
-### Always measured
+- `workflow_dispatch` for manual runs,
+- concurrency cancellation to avoid duplicated CI load on force-pushes.
 
-- `astryx_gaqwh`
-- `sha3_256`
+## Testing locally
 
-### Optional algorithms
-
-- `blake3` (install: `pip install blake3`)
-- `kangaroo12` (install: `pip install pycryptodome`)
-
-### Notes on benchmark interpretation
-
-- Results vary by CPU model, power state, and Python version.
-- GAQWH is implemented in Python/NumPy and is expected to be slower than highly optimized production hashes.
-- Run multiple times and report median values for fair comparison.
-
-## Testing
-
-Run the full test suite:
+### Python tests
 
 ```bash
 python -m unittest discover -s tests -q
 ```
 
-What tests currently check:
+### Rust tests
 
-- Determinism.
-- String/bytes parity.
-- Output format and length.
-- Basic avalanche-style bit-difference check.
-- Small collision smoke test over a tiny corpus.
-- Large-input handling.
-- CLI behavior.
+```bash
+cargo fmt --all -- --check
+cargo test --all-targets --all-features
+```
 
-## Security and production-use warning
+### Benchmark script
 
-This repository is experimental software.
+```bash
+python scripts/benchmark_hashes.py --size 1024 --iterations 2000
+```
 
-Before considering production use, you should complete at least:
+Optional benchmark comparators:
 
-1. External cryptanalysis by qualified reviewers.
-2. Side-channel evaluation.
-3. Cross-platform reproducibility verification.
-4. Strict threat-model documentation.
-5. Performance profiling under real deployment conditions.
+- `blake3` via `pip install blake3`
+- `kangaroo12` via `pip install pycryptodome`
 
-Until those activities are completed, do not treat this package as a substitute for standardized audited primitives in critical systems.
+## Blockchain-oriented hardening guidance
+
+To move toward blockchain-grade operational safety, use this checklist:
+
+1. **Cryptanalysis phase**
+   - commission independent external review,
+   - run structured preimage/collision differential campaigns,
+   - include reduced-round distinguishers and trail analyses.
+
+2. **Protocol integration hygiene**
+   - domain-separate all hash contexts (block header vs tx ID vs Merkle node),
+   - use versioned prefixes (e.g., `b"ASTRYX-BLOCK-V1" || payload`),
+   - avoid cross-protocol digest reuse without tags.
+
+3. **Consensus safety**
+   - lock exact algorithm + test vectors in spec,
+   - cross-check outputs on multiple architectures/compilers,
+   - introduce mandatory canonical serialization before hashing.
+
+4. **Implementation hardening**
+   - fuzz parsers and hash API boundaries,
+   - add property tests (determinism, output-length invariants, avalanche distributions),
+   - track performance regression thresholds in CI.
+
+5. **Operational readiness**
+   - define migration plan/versioning if hash changes,
+   - document replay/rollback strategy,
+   - stage activation via testnet and shadow-mainnet verification.
+
+## Threat model and limitations
+
+- No post-quantum security proof is provided.
+- “Quantum-walk-inspired” does not imply standardized post-quantum assurances.
+- No side-channel certification.
+- No guarantee of equivalence between independent implementation families unless explicitly tested.
+
+Use this repo for experimentation, education, and prototyping unless/until independent review says otherwise.
 
 ## Roadmap
 
-Short-term improvements that would make this repository more useful:
-
-1. Publish formal algorithm specification (step-by-step and test vectors).
-2. Expand statistical test corpus and reporting artifacts.
-3. Add repeatable benchmark matrix in CI for selected environments.
-4. Add packaging/docs polish (versioned docs, changelog, release notes).
-5. If targeting production, implement performance-critical path in Rust/C and preserve deterministic compatibility tests.
+- Publish a formal algorithm specification with normative test vectors.
+- Add cross-language conformance harness (Python ↔ Rust) or explicitly version divergent variants.
+- Add nightly benchmark trend reporting.
+- Expand docs in `docs/` with protocol integration examples and domain-separation recipes.
+- Add dedicated fuzzing and long-run statistical test automation.
 
 ## License
 
-MIT License.
+MIT.
