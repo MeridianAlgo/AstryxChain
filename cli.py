@@ -20,6 +20,11 @@ def main():
     if args.data is None:
         if not sys.stdin.isatty():
             data = sys.stdin.read().strip()
+            if not data:
+                print(
+                    "Astryx CLI: No data provided. Use 'python cli.py <string>' or piped input."
+                )
+                return
         else:
             print(
                 "Astryx CLI: No data provided. Use 'python cli.py <string>' or piped input."
