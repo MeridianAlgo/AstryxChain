@@ -14,6 +14,8 @@ class Astryx:
     """
 
     def __init__(self, output_bits: int = 256):
+        if output_bits <= 0 or output_bits % 64 != 0:
+            raise ValueError("output_bits must be a positive multiple of 64")
         self.output_bits = output_bits
         self.N = 512  # Increased state size for better collision resistance
         self.MASK64 = 0xFFFFFFFFFFFFFFFF

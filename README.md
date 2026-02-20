@@ -45,7 +45,7 @@ The final measurement phase uses a **multi-pass sponge construction** with large
 
 ```bash
 git clone https://github.com/MeridianAlgo/AstryxChain
-cd Astryx
+cd AstryxChain
 pip install -r requirements.txt
 pip install .
 ```
@@ -53,12 +53,83 @@ pip install .
 ### Usage
 
 ```python
-from astryx import 
+from astryx import gaqwh
 
 # Generate a 256-bit secure hash
 tx_data = "block_header_data_0xABC123"
-digest = (tx_data)
+digest = gaqwh(tx_data)
 print(f"Astryx Digest: {digest}")
+
+# Generate a 512-bit hash
+digest_512 = gaqwh(tx_data, output_bits=512)
+print(f"Astryx Digest (512-bit): {digest_512}")
+```
+
+### CLI Usage
+
+Hash a string:
+
+```bash
+python cli.py "Astryx"
+```
+
+Output:
+
+```text
+50c20f902e5d0995f654d0665ff05b1e5b7fba21cd637442a8d7690eff7c2466
+```
+
+Hash piped input (stdin):
+
+```bash
+echo Astryx | python cli.py
+```
+
+Output:
+
+```text
+50c20f902e5d0995f654d0665ff05b1e5b7fba21cd637442a8d7690eff7c2466
+```
+
+Select output size (must be a positive multiple of 64):
+
+```bash
+python cli.py -b 128 "Astryx"
+python cli.py -b 256 "Astryx"
+python cli.py -b 512 "Astryx"
+```
+
+Outputs:
+
+```text
+# 128-bit (-b 128)
+50c20f902e5d0995f654d0665ff05b1e
+
+# 256-bit (-b 256)
+50c20f902e5d0995f654d0665ff05b1e5b7fba21cd637442a8d7690eff7c2466
+
+# 512-bit (-b 512)
+50c20f902e5d0995f654d0665ff05b1e5b7fba21cd637442a8d7690eff7c2466145519be2cb4a990c69ba3e4e5624ec18fa5b06855fd0fb5f22f31a39512ae5e
+```
+
+No args + no stdin:
+
+```bash
+python cli.py
+```
+
+Output:
+
+```text
+Astryx CLI: No data provided. Use 'python cli.py <string>' or piped input.
+```
+
+### Running Tests
+
+This project uses the built-in `unittest` runner.
+
+```bash
+python -m unittest discover -s tests -q
 ```
 
 ## Security Analysis
