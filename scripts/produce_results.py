@@ -1,5 +1,6 @@
 from astryx import gaqwh
 
+
 def produce_demo():
     test_cases = [
         ("Word: 'Astryx'", "Astryx"),
@@ -15,6 +16,7 @@ def produce_demo():
         result = gaqwh(data)
         print(f"{label:<25} | {result}")
     print("-" * 50)
+
 
 if __name__ == "__main__":
     produce_demo()

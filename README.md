@@ -1,14 +1,14 @@
-# Astryx (GAQWH)
+# AstryxChain
 
 ![CI Status](https://github.com/MeridianAlgo/AstryxChain/actions/workflows/ci.yml/badge.svg)
 
-**Astryx** is a next-generation, high-performance, and quantum-resistant hashing algorithm designed for industrial-scale blockchain architectures. It implements the **Adaptive Quantum Walk Hash (GAQWH)**, a sophisticated cryptographic engine that combines the chaotic evolution of non-linear quantum dynamics with robust classical bit-diffusion.
+**AstryxChain** is a next-generation, high-performance, and quantum-resistant hashing algorithm designed for industrial-scale blockchain architectures. It implements the **Adaptive Quantum Walk Hash**, a sophisticated cryptographic engine that combines the chaotic evolution of non-linear quantum dynamics with robust classical bit-diffusion.
 
 ## Sample Results (v1.0.0)
 
-The following results demonstrate the high-entropy output of the GAQWH algorithm across various input types:
+The following results demonstrate the high-entropy output of the algorithm across various input types:
 
-| Input Type | Sample Data | Astryx GAQWH Hash (256-bit) |
+| Input Type | Sample Data | Astryx Hash (256-bit) |
 | :--- | :--- | :--- |
 | **Word** | `Astryx` | `1a0ac88a0af3a9d0988fb65820818596fa0ab7e7...` |
 | **Word** | `astryx` | `09baab0ebce6d9c36cb18b971bee769ebdd50e6f...` |
@@ -22,7 +22,7 @@ The following results demonstrate the high-entropy output of the GAQWH algorithm
 The **Astryx Engine** is engineered to remain secure in the post-quantum era, where traditional ECDSA and SHA-2 algorithms may face vulnerabilities from Shor's and Grover's algorithms.
 
 ### 1. High-Dimensional Quantum Walk
-Unlike standard random walks, GAQWH operates in a 512-node state space using a **4-Dimensional Unitary Coin (S-Matrix)**. This ensures that every bit of input creates a complex superposition of states across the entire walker space, maximizing entropy and preventing preimage reconstruction.
+Unlike standard random walks,  operates in a 512-node state space using a **4-Dimensional Unitary Coin (S-Matrix)**. This ensures that every bit of input creates a complex superposition of states across the entire walker space, maximizing entropy and preventing preimage reconstruction.
 
 ### 2. Quantum Chaotic Mapping
 The walker's movement is steered by a **discrete chaotic mapping** stage. Every message byte triggers a non-linear, index-dependent "chaotic hop," forcing the state evolution to be highly sensitive to input changes (Butterfly Effect). This provides extreme **Avalanche Resistance**, where a single-bit change in input alters more than 50% of the output hash bits.
@@ -53,17 +53,17 @@ pip install .
 ### Usage
 
 ```python
-from astryx import gaqwh
+from astryx import 
 
 # Generate a 256-bit secure hash
 tx_data = "block_header_data_0xABC123"
-digest = gaqwh(tx_data)
+digest = (tx_data)
 print(f"Astryx Digest: {digest}")
 ```
 
 ## Security Analysis
 
-Astryx (GAQWH) is designed to resist:
+Astryx () is designed to resist:
 -   **Grover's Algorithm**: The non-linear chaotic diffusion inflates the search space complexity, requiring a quantum attacker to perform O(2^128) operations for a 256-bit hash.
 -   **Differential/Linear Cryptanalysis**: The multi-pass sponge and S-Matrix evolution provide high-order nonlinearity.
 -   **Birthday Attacks**: Optimized for collision resistance up to the theoretical limit of the output digest size.
@@ -71,5 +71,6 @@ Astryx (GAQWH) is designed to resist:
 ---
 
 **Astryx - Secure The Blockchain.**  
-Developed by the Astryx Team.  
+A MeridianAlgo Project.
+Developed by the Astryx Team.
 License: MIT
