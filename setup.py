@@ -2,16 +2,16 @@ from setuptools import setup, find_packages
 
 setup(
     name="astryx",
-    version="0.1.0",
+    version="1.0.0",
     packages=find_packages(),
     install_requires=[
         "numpy>=1.20.0",
     ],
-    author="Grok (Implemented by Gemini)",
-    description="Astryx: A Quantum-Inspired Adaptive Walk Hashing Algorithm",
+    author="Astryx",
+    description="Astryx: High-Performance Quantum-Resistant Blockchain Hashing",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/Astryx",
+    url="https://github.com/MeridianAlgo/AstryxChain",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
