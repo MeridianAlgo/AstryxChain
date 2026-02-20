@@ -2,96 +2,159 @@
 
 ![CI Status](https://github.com/MeridianAlgo/AstryxChain/actions/workflows/ci.yml/badge.svg)
 
-**AstryxChain** is a next-generation, high-performance, and quantum-resistant hashing algorithm designed for industrial-scale blockchain architectures. It implements the **Adaptive Quantum Walk Hash**, a sophisticated cryptographic engine that combines the chaotic evolution of non-linear quantum dynamics with robust classical bit-diffusion.
+AstryxChain is a Python package that currently ships one primitive: `gaqwh`, a custom deterministic hash function.
 
-## Sample Results (v1.0.0)
+This repository does **not** implement a signature scheme (such as ML-DSA / Dilithium), key exchange, encryption, or consensus logic. It is focused on hashing only.
 
-The following results demonstrate the high-entropy output of the algorithm across various input types:
+---
 
-| Input Type | Sample Data | Astryx Hash (256-bit) |
-| :--- | :--- | :--- |
-| **Word** | `Astryx` | `1a0ac88a0af3a9d0988fb65820818596fa0ab7e7...` |
-| **Word** | `astryx` | `09baab0ebce6d9c36cb18b971bee769ebdd50e6f...` |
-| **Wallet Key** | `5Kb8kLf9...` | `f0ea349d883cfea4d0fa5b284b24ad87b075f3c4...` |
-| **ETH Address** | `0x742d3...` | `e7369f2d8caef6a62e01172851e8de53ac00d511...` |
+## Table of contents
 
-> *Note: These hashes are deterministic. A single character change in a wallet key results in a completely unique digest.*
+1. [Project status](#project-status)
+2. [What AstryxChain includes](#what-astryxchain-includes)
+3. [What AstryxChain does not include](#what-astryxchain-does-not-include)
+4. [Repository layout](#repository-layout)
+5. [Installation](#installation)
+6. [API reference](#api-reference)
+7. [Command-line interface](#command-line-interface)
+8. [Benchmarking](#benchmarking)
+9. [Testing](#testing)
+10. [Security and production-use warning](#security-and-production-use-warning)
+11. [Roadmap](#roadmap)
+12. [License](#license)
 
-## Technical Architecture
+---
 
-The **Astryx Engine** is engineered to remain secure in the post-quantum era, where traditional ECDSA and SHA-2 algorithms may face vulnerabilities from Shor's and Grover's algorithms.
+## Project status
 
-### 1. High-Dimensional Quantum Walk
-Unlike standard random walks,  operates in a 512-node state space using a **4-Dimensional Unitary Coin (S-Matrix)**. This ensures that every bit of input creates a complex superposition of states across the entire walker space, maximizing entropy and preventing preimage reconstruction.
+- **Current maturity:** experimental.
+- **Implementation language:** Python + NumPy.
+- **Primary goal right now:** provide a reproducible hashing prototype and tooling around it.
 
-### 2. Quantum Chaotic Mapping
-The walker's movement is steered by a **discrete chaotic mapping** stage. Every message byte triggers a non-linear, index-dependent "chaotic hop," forcing the state evolution to be highly sensitive to input changes (Butterfly Effect). This provides extreme **Avalanche Resistance**, where a single-bit change in input alters more than 50% of the output hash bits.
+If your end goal is a production blockchain, treat this repository as a research/prototyping component and pair it with standardized cryptographic primitives for signatures and key management.
 
-### 3. Non-Markovian Feedback (History Memory)
-To resist backtracking and algebraic attacks, Astryx maintains a **multi-step memory buffer**. Current state evolutions are continuously blended with historical states (weighted feedback loops), breaking the Markov property. This ensures that the hash transformation is mathematically non-invertible even with high-compute quantum hardware.
+## What AstryxChain includes
 
-### 4. Prime-Based Sponge Compression
-The final measurement phase uses a **multi-pass sponge construction** with large-prime mixing (inspired by NTRU and lattice cryptography). This stage applies cyclic bit-rotations and prime-factor XORing to ensure the final digest is free of statistical bias and linear patterns.
+- A callable hash function: `gaqwh(data, output_bits=256)`.
+- A simple class wrapper (`Astryx`) that powers the hash routine.
+- Output length selection in multiples of 64 bits.
+- A CLI (`cli.py`) for hashing text input or piped input.
+- Unit tests under `tests/`.
+- A benchmark script (`scripts/benchmark_hashes.py`) to compare throughput with common reference hashes.
 
-## Performance & Optimization
+## What AstryxChain does not include
 
--   **Blockchain Ready**: Optimized for Merkle tree structures and Proof-of-Work/Stake validations.
--   **Vectorized Engine**: Built on top of high-performance linear algebra (NumPy), allowing it to process large data blocks with O(N log N) complexity.
--   **Architecture-Agnostic**: Implemented with 64-bit masking to ensure deterministic results across different CPU architectures and operating systems.
+- No digital signature scheme.
+- No wallet/key derivation standards.
+- No consensus implementation.
+- No formal cryptographic proof.
+- No third-party cryptanalysis report.
 
-## Quick Start
+Because of those gaps, the project should not be marketed as a replacement for mature standardized cryptographic systems.
 
-### Installation
+## Repository layout
+
+```text
+astryx/
+  __init__.py          # public package exports
+  core.py              # compatibility re-exports
+  gaqwh.py             # full hash implementation
+
+scripts/
+  benchmark_hashes.py  # local benchmark utility
+  produce_results.py   # sample digest printer
+
+tests/
+  test_hash.py         # unit tests + CLI tests
+
+cli.py                 # command line entry point
+README.md
+requirements.txt
+setup.py
+```
+
+## Installation
+
+### 1) Clone repository
 
 ```bash
 git clone https://github.com/MeridianAlgo/AstryxChain
 cd AstryxChain
+```
+
+### 2) Install dependencies
+
+```bash
 pip install -r requirements.txt
+```
+
+### 3) Install package
+
+```bash
 pip install .
 ```
 
-### Usage
+## API reference
+
+### `gaqwh(data, output_bits=256) -> str`
+
+Hashes a string or bytes input and returns a lowercase hex digest.
+
+#### Parameters
+
+- `data` (`str | bytes`): message to hash.
+- `output_bits` (`int`, default `256`): output size in bits.
+
+#### Constraints
+
+- `output_bits` must be:
+  - greater than 0
+  - a multiple of 64
+
+Invalid values raise `ValueError`.
+
+#### Return value
+
+- Hex string with length `output_bits / 4` characters.
+
+#### Example
 
 ```python
 from astryx import gaqwh
 
-# Generate a 256-bit secure hash
-tx_data = "block_header_data_0xABC123"
-digest = gaqwh(tx_data)
-print(f"Astryx Digest: {digest}")
+message = "block_header_height_124"
+digest_256 = gaqwh(message)
+digest_512 = gaqwh(message, output_bits=512)
 
-# Generate a 512-bit hash
-digest_512 = gaqwh(tx_data, output_bits=512)
-print(f"Astryx Digest (512-bit): {digest_512}")
+print(digest_256)
+print(digest_512)
 ```
 
-### CLI Usage
+### Backward-compatible imports
 
-Hash a string:
+Both import styles are supported:
+
+```python
+from astryx import gaqwh
+# or
+from astryx.core import gaqwh
+```
+
+## Command-line interface
+
+### Hash a positional argument
 
 ```bash
 python cli.py "Astryx"
 ```
 
-Output:
-
-```text
-50c20f902e5d0995f654d0665ff05b1e5b7fba21cd637442a8d7690eff7c2466
-```
-
-Hash piped input (stdin):
+### Hash piped input
 
 ```bash
-echo Astryx | python cli.py
+echo "Astryx" | python cli.py
 ```
 
-Output:
-
-```text
-50c20f902e5d0995f654d0665ff05b1e5b7fba21cd637442a8d7690eff7c2466
-```
-
-Select output size (must be a positive multiple of 64):
+### Choose output size
 
 ```bash
 python cli.py -b 128 "Astryx"
@@ -99,49 +162,76 @@ python cli.py -b 256 "Astryx"
 python cli.py -b 512 "Astryx"
 ```
 
-Outputs:
+### Empty input behavior
 
-```text
-# 128-bit (-b 128)
-50c20f902e5d0995f654d0665ff05b1e
+If no argument is provided and stdin is empty, CLI prints a guidance message and exits without generating a digest.
 
-# 256-bit (-b 256)
-50c20f902e5d0995f654d0665ff05b1e5b7fba21cd637442a8d7690eff7c2466
+## Benchmarking
 
-# 512-bit (-b 512)
-50c20f902e5d0995f654d0665ff05b1e5b7fba21cd637442a8d7690eff7c2466145519be2cb4a990c69ba3e4e5624ec18fa5b06855fd0fb5f22f31a39512ae5e
-```
-
-No args + no stdin:
+A local benchmark script is available:
 
 ```bash
-python cli.py
+python scripts/benchmark_hashes.py --size 1024 --iterations 2000
 ```
 
-Output:
+### Always measured
 
-```text
-Astryx CLI: No data provided. Use 'python cli.py <string>' or piped input.
-```
+- `astryx_gaqwh`
+- `sha3_256`
 
-### Running Tests
+### Optional algorithms
 
-This project uses the built-in `unittest` runner.
+- `blake3` (install: `pip install blake3`)
+- `kangaroo12` (install: `pip install pycryptodome`)
+
+### Notes on benchmark interpretation
+
+- Results vary by CPU model, power state, and Python version.
+- GAQWH is implemented in Python/NumPy and is expected to be slower than highly optimized production hashes.
+- Run multiple times and report median values for fair comparison.
+
+## Testing
+
+Run the full test suite:
 
 ```bash
 python -m unittest discover -s tests -q
 ```
 
-## Security Analysis
+What tests currently check:
 
-Astryx () is designed to resist:
--   **Grover's Algorithm**: The non-linear chaotic diffusion inflates the search space complexity, requiring a quantum attacker to perform O(2^128) operations for a 256-bit hash.
--   **Differential/Linear Cryptanalysis**: The multi-pass sponge and S-Matrix evolution provide high-order nonlinearity.
--   **Birthday Attacks**: Optimized for collision resistance up to the theoretical limit of the output digest size.
+- Determinism.
+- String/bytes parity.
+- Output format and length.
+- Basic avalanche-style bit-difference check.
+- Small collision smoke test over a tiny corpus.
+- Large-input handling.
+- CLI behavior.
 
----
+## Security and production-use warning
 
-**Astryx - Secure The Blockchain.**  
-A MeridianAlgo Project.
-Developed by the Astryx Team.
-License: MIT
+This repository is experimental software.
+
+Before considering production use, you should complete at least:
+
+1. External cryptanalysis by qualified reviewers.
+2. Side-channel evaluation.
+3. Cross-platform reproducibility verification.
+4. Strict threat-model documentation.
+5. Performance profiling under real deployment conditions.
+
+Until those activities are completed, do not treat this package as a substitute for standardized audited primitives in critical systems.
+
+## Roadmap
+
+Short-term improvements that would make this repository more useful:
+
+1. Publish formal algorithm specification (step-by-step and test vectors).
+2. Expand statistical test corpus and reporting artifacts.
+3. Add repeatable benchmark matrix in CI for selected environments.
+4. Add packaging/docs polish (versioned docs, changelog, release notes).
+5. If targeting production, implement performance-critical path in Rust/C and preserve deterministic compatibility tests.
+
+## License
+
+MIT License.

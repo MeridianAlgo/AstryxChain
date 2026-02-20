@@ -8,7 +8,7 @@ setup(
         "numpy>=1.20.0",
     ],
     author="Astryx",
-    description="Astryx: High-Performance Quantum-Resistant Blockchain Hashing",
+    description="Astryx: Experimental GAQWH hashing toolkit",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/MeridianAlgo/AstryxChain",
